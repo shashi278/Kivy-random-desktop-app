@@ -28,11 +28,6 @@ tmStmp=  "{}{}{}".format(tm.tm_mday,tm.tm_mon,tm.tm_year)
 #search text
 search_text=''
 
-
-#class for the no search result screen
-#class NoResultLayout(AnchorLayout):
-#    pass
-
 #popup class for the update part
 class EditPop(Popup):
     pass
@@ -106,7 +101,6 @@ class PresentScreen(Screen):
     prod_name= ObjectProperty()
     tot_price= ObjectProperty()
     paid_price= ObjectProperty()
-    #NoResLay= NoResultLayout()
 
     rv= ObjectProperty()
     list_index= 0
@@ -232,34 +226,29 @@ class PresentScreen(Screen):
         except:
             prop= ["prd_name"]
 
-        #print("prop: {}".format(prop))
         print("search_text: {}".format(search_text))
-
+    
+        #retured_list would contain all the results after searching for each value in 'prop' from the database
         for each in prop:
             temp_list= self.search_from_database(conn, each, search_text)
             if temp_list:
                 #print("temp_list: ".format(temp_list))
                 returned_list.extend(temp_list)
-
+        
+        #converting it to a set and again to a list will elliminate all repeated elements 
         returned_list= list(set(returned_list))
-        print("returned list: {}".format(returned_list))
+        #print("returned list: {}".format(returned_list))
         #print("Everything's alright!")
         self.rv.data=[]
 
         if (len(search_text) and not returned_list):
             pass
             #print("Inside if part")
-            #print("No result layout: {}".format(NoResultLayout()))
-            #if not self.ids.list_area.ids.no_res_lay:
-            #self.ids.list_area.ids.no_res_lay.size_hint=(1,1)
-            #print("dummy in if: {}".format(self.ids.list_area.ids))
             
         elif (not len(search_text) and not returned_list):
-            print("Inside elif part")
+            #print("Inside elif part")
             try:
                 #print("Is everything okay?")
-                #if self.ids.list_area.ids.no_res_lay:
-                #self.ids.list_area.ids.no_res_lay.size_hint=(0,0)
                 c= conn.cursor()
                 database_list= c.execute("SELECT * FROM page").fetchall()
                 temp_list= self.populate_view(database_list)
@@ -275,9 +264,6 @@ class PresentScreen(Screen):
                 #try:
                 #dummy= self.ids.list_area.ids
                 #print("dummy: {}".format(dummy))
-                #self.list_area.no_res_lay.size_hint=(0,0)
-                #except:
-                 #   print("error within try->try")
 
                 temp_list= self.populate_view(returned_list)
                 self.rv.data.extend(temp_list)
@@ -460,7 +446,8 @@ class Diary(App):
         Clock.schedule_interval(self.update,0)
         self.root.ids.presScreen.ids.search_text.bind(
             text=self.on_text)
-
+        
+        #creates a file called "database" in which all .db files would be stored if it's not present already
         if not os.path.exists("database/"):
             os.makedirs("database/")
 
