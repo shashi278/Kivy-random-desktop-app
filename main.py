@@ -17,6 +17,7 @@ from sqlite3 import Error
 
 import re
 import glob
+import os
 
 #timestamp
 tm= time.localtime()
@@ -131,13 +132,15 @@ class PresentScreen(Screen):
             tm= time.localtime()
             stmp= "{}{}{}".format(tm.tm_hour, tm.tm_min, tm.tm_sec)
 
-            try:
-                conn= self.connect_database()
-                c= conn.cursor()
-                x= c.execute("SELECT * FROM page")
-                self.database_list= x.fetchall()
-            except Error as e:
-                print(e)
+            conn= self.connect_database()
+            if conn is not None:
+                try:
+                    
+                    c= conn.cursor()
+                    x= c.execute("SELECT * FROM page")
+                    self.database_list= x.fetchall()
+                except Error as e:
+                    print(e)
 
 
             x={
@@ -305,79 +308,83 @@ class PresentScreen(Screen):
                 )
                 """
 
+        if conn is not None:
+            try:
+                c= conn.cursor()
+                c.execute(table)
+                conn.commit()
 
-        try:
-            c= conn.cursor()
-            c.execute(table)
-            conn.commit()
-
-        except Error as e:
-            print("Error: {}".format(e))
+            except Error as e:
+                print("Error: {}".format(e))
 
     #insert data into database
     def insert_into_database(self, conn, data):
-        try:
-            c= conn.cursor()
-            c.execute(
-            """
-            INSERT INTO page
-            (prd_name, tot_price, paid_price, due_amnt, stmp) VALUES (?,?,?,?,?)
-            """, data
-            )
-            conn.commit()
+        if conn is not None:
+            try:
+                c= conn.cursor()
+                c.execute(
+                """
+                INSERT INTO page
+                (prd_name, tot_price, paid_price, due_amnt, stmp) VALUES (?,?,?,?,?)
+                """, data
+                )
+                conn.commit()
 
-        except Error as e:
-            print("Error: {}".format(e))
+            except Error as e:
+                print("Error: {}".format(e))
 
     #update data into database
     def update_database(self, conn, index, field, field_val):
-        try:
-            c= conn.cursor()
-            c.execute(
-            """
-            UPDATE page
-            SET
-                {}= ?
-            WHERE id= ?
-            """.format(field),
-            (field_val, index))
+        if conn is not None:
+            try:
+                c= conn.cursor()
+                c.execute(
+                """
+                UPDATE page
+                SET
+                    {}= ?
+                WHERE id= ?
+                """.format(field),
+                (field_val, index))
 
-            conn.commit()
-        except Error as e:
-            print("Error: {}".format(e))
+                conn.commit()
+            except Error as e:
+                print("Error: {}".format(e))
 
     #delete specific data from database
     def delete_from_database(self, conn, index):
-        try:
-            c= conn.cursor()
-            c.execute(
-            """
-            DELETE FROM page WHERE id=?
-            """,
-            (index,)
-            )
-            conn.commit()
+        if conn is not None:
+            try:
+                c= conn.cursor()
+                c.execute(
+                """
+                DELETE FROM page WHERE id=?
+                """,
+                (index,)
+                )
+                conn.commit()
 
-        except Error as e:
-            print("Error: {}".format(e))
+            except Error as e:
+                print("Error: {}".format(e))
 
     #search within the database
     def search_from_database(self, conn, prop, value):
-        try:
-            c=conn.cursor()
-            filtered_list= c.execute(
-                """
-                SELECT *
-                FROM page
-                WHERE {} LIKE ?
-                ORDER BY id;
-                """.format(prop),
-                (value+'%',)
-                ).fetchall()
-            return filtered_list
+        if conn is not None:
+            try:
+                c=conn.cursor()
+                filtered_list= c.execute(
+                    """
+                    SELECT *
+                    FROM page
+                    WHERE {} LIKE ?
+                    ORDER BY id;
+                    """.format(prop),
+                    (value+'%',)
+                    ).fetchall()
+                return filtered_list
 
-        except Error as e:
-            print(e)
+            except Error as e:
+                print(e)
 
         return None
 
@@ -454,16 +461,22 @@ class Diary(App):
         self.root.ids.presScreen.ids.search_text.bind(
             text=self.on_text)
 
+        if not os.path.exists("database/"):
+            os.makedirs("database/")
+
         #populate the presentScreen listview if 
         presScr= self.root.ids.presScreen
+
         conn= presScr.connect_database()
-        c= conn.cursor()
-        try:
-            database_list= c.execute("SELECT * FROM page").fetchall()
-            temp_list= presScr.populate_view(database_list)
-            presScr.rv.data.extend(temp_list)
-        except Error as e:
-            print(e)
+        if conn is not None:
+
+            try:
+                c= conn.cursor()
+                database_list= c.execute("SELECT * FROM page").fetchall()
+                temp_list= presScr.populate_view(database_list)
+                presScr.rv.data.extend(temp_list)
+            except Error as e:
+                print(e)
 
 
     def update(self, nap):
