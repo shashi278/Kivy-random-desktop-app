@@ -7,5 +7,5 @@ Trying to create a random desktop app using python/kivy- underprocess
   -
   -Admin Authentication so that no one else could manipulate the data
   -
-  -A better search option in then "previous pages"(Filtering based)
+  -A better search option in the "previous pages"(Filtering based)
   -
